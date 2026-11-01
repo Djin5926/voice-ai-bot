@@ -95,6 +95,7 @@ async def on_voice_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     if message.voice.duration > MAX_VOICE_SECONDS:
         await message.reply_text(f"Слишком длинное аудио, максимум {MAX_VOICE_SECONDS} секунд")
         return
+    
     await message.reply_text("Распознаю...")
     audio: Path | None = None
     try:
@@ -103,7 +104,19 @@ async def on_voice_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         audio = Path(ogg_file.name)
         tg_file = await message.voice.get_file()
         await tg_file.download_to_drive(audio)
-        text = await asyncio.to_thread(stt.transcribe, audio)
+        
+        # --- ИЗМЕНЕНИЕ: Защита от зависания (таймаут 120 секунд) ---
+        try:
+            text = await asyncio.wait_for(
+                asyncio.to_thread(stt.transcribe, audio), 
+                timeout=120
+            )
+        except asyncio.TimeoutError:
+            logger.warning("STT превысил лимит времени (user_id=%s)", message.from_user.id)
+            await message.reply_text("Слишком долго обрабатываю аудио. Попробуйте записать покороче.")
+            return
+        # -----------------------------------------------------------
+
         await message.reply_text(text if text else "Не удалось распознать речь.")
     except Exception:
         logger.exception("STT не удалось (user_id=%s)", message.from_user.id)
@@ -120,6 +133,10 @@ async def on_error(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def post_init(application: Application) -> None:
     logger.info("Bot started")
+    # --- ИЗМЕНЕНИЕ: Прогрев модели в фоне при старте ---
+    # Это загрузит Whisper в память сразу, чтобы первое голосовое не висело
+    asyncio.create_task(asyncio.to_thread(stt.get_model))
+    # ---------------------------------------------------
 
 
 def main() -> None:
@@ -141,7 +158,7 @@ def main() -> None:
     application = (
         ApplicationBuilder()
         .token(token)
-        .post_init(post_init)
+        .post_init(post_init) # <-- Вызов прогрева модели
         .build()
     )
     application.add_handler(CommandHandler(["start", "help"], cmd_start))
