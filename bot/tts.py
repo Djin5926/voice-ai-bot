@@ -29,7 +29,6 @@ def ffmpeg_path() -> Path | None:
 # Модель скачается при первом запуске (около 150 МБ) и будет работать офлайн.
 logger.info("Загружаю модель Silero TTS (v4_ru)...")
 try:
-    # Загружаем модель
     model, example_text = torch.hub.load(
         repo_or_dir='snakers4/silero-models',
         model='silero_tts',
@@ -48,7 +47,6 @@ def _synthesize_wav(text: str, voice: str) -> Path:
         raise RuntimeError("Модель Silero TTS не загружена")
         
     # Silero использует свои имена голосов: aidar (муж), baya (жен), kseniya, xenia, eugene.
-    # Мы пока используем 'aidar' по умолчанию.
     speaker = 'aidar'
     
     audio = model.apply_tts(
