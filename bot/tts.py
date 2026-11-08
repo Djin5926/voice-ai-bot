@@ -8,8 +8,28 @@ import tempfile
 from pathlib import Path
 
 import edge_tts
+import edge_tts.communicate
+import edge_tts.constants
 
 logger = logging.getLogger(__name__)
+
+# =====================================================================
+# 👇 ПАТЧ ДЛЯ MICROSOFT: Принудительно переключаем на новый сервер
+# =====================================================================
+NEW_HOST = "api.msedgeservices.com"
+try:
+    # Формируем новый URL с обязательным токеном
+    new_wss_url = (
+        f"wss://{NEW_HOST}/tts/cognitiveservices/websocket/v1"
+        f"?Ocp-Apim-Subscription-Key={edge_tts.constants.TRUSTED_CLIENT_TOKEN}"
+    )
+    # Подменяем адреса в библиотеке
+    edge_tts.constants.WSS_URL = new_wss_url
+    edge_tts.communicate.WSS_URL = new_wss_url
+    logger.info("Применен патч сервера Microsoft TTS (api.msedgeservices.com)")
+except Exception as e:
+    logger.warning(f"Не удалось применить патч сервера: {e}")
+# =====================================================================
 
 ATTEMPTS = 2
 RETRY_PAUSE_SEC = 1
@@ -31,7 +51,7 @@ def ffmpeg_path() -> Path | None:
 async def _synthesize_mp3(text: str, voice: str) -> Path:
     """Текст -> mp3 через edge-tts. Сетевые ошибки: 2 попытки с паузой 1 сек."""
     
-    # 👇 Получаем адрес прокси из переменных окружения (из .env)
+    # Получаем адрес прокси из переменных окружения (из .env)
     proxy_url = os.getenv("HTTPS_PROXY") or os.getenv("HTTP_PROXY")
     
     last_exc: Exception | None = None
@@ -40,7 +60,7 @@ async def _synthesize_mp3(text: str, voice: str) -> Path:
         mp3_file.close()
         mp3_path = Path(mp3_file.name)
         try:
-            # 👇 Передаем прокси в Communicate, если он задан
+            # Передаем прокси в Communicate, если он задан
             if proxy_url:
                 communicator = edge_tts.Communicate(text, voice, proxy=proxy_url)
             else:
