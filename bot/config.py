@@ -12,13 +12,15 @@ load_dotenv(BASE_DIR / ".env")
 MAX_TEXT_LEN = 1000
 MAX_VOICE_SECONDS = 60
 
-# key -> (надпись на кнопке, имя голоса edge-tts)
+# key -> (надпись на кнопке, имя голоса Silero TTS)
 VOICES: dict[str, tuple[str, str]] = {
-    "dmitry": ("Dmitry (мужской, ru)", "ru-RU-DmitryNeural"),
-    "svetlana": ("Svetlana (женский, ru)", "ru-RU-SvetlanaNeural"),
-    "aria": ("Aria (женский, en)", "en-US-AriaNeural"),
+    "aidar": ("Aidar (мужской)", "aidar"),
+    "baya": ("Baya (женский)", "baya"),
+    "eugene": ("Eugene (мужской)", "eugene"),
+    "kseniya": ("Kseniya (женский)", "kseniya"),
+    "xenia": ("Xenia (женский)", "xenia"),
 }
-DEFAULT_VOICE = VOICES["dmitry"][1]
+DEFAULT_VOICE = VOICES["aidar"][1]
 
 
 def get_bot_token() -> str:
