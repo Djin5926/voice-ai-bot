@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import os
 import shutil
 import tempfile
 from pathlib import Path
@@ -29,13 +30,23 @@ def ffmpeg_path() -> Path | None:
 
 async def _synthesize_mp3(text: str, voice: str) -> Path:
     """Текст -> mp3 через edge-tts. Сетевые ошибки: 2 попытки с паузой 1 сек."""
+    
+    # 👇 Получаем адрес прокси из переменных окружения (из .env)
+    proxy_url = os.getenv("HTTPS_PROXY") or os.getenv("HTTP_PROXY")
+    
     last_exc: Exception | None = None
     for attempt in range(1, ATTEMPTS + 1):
         mp3_file = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False)
         mp3_file.close()
         mp3_path = Path(mp3_file.name)
         try:
-            await edge_tts.Communicate(text, voice).save(str(mp3_path))
+            # 👇 Передаем прокси в Communicate, если он задан
+            if proxy_url:
+                communicator = edge_tts.Communicate(text, voice, proxy=proxy_url)
+            else:
+                communicator = edge_tts.Communicate(text, voice)
+                
+            await communicator.save(str(mp3_path))
             return mp3_path
         except Exception as exc:
             mp3_path.unlink(missing_ok=True)
