@@ -138,9 +138,14 @@ def main() -> None:
     except RuntimeError as exc:
         sys.exit(f"ОШИБКА: {exc}")
 
+    # НАСТРОЙКИ ПРОКСИ
+    PROXY_URL = "socks5://127.0.0.1:10808"
+
     application = (
         ApplicationBuilder()
         .token(token)
+        .proxy(PROXY_URL)
+        .get_updates_proxy(PROXY_URL)
         .post_init(post_init)
         .build()
     )
