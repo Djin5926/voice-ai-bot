@@ -38,8 +38,8 @@ HELP_TEXT = (
 FFMPEG_MISSING = (
     "ОШИБКА: ffmpeg не найден ни в PATH, ни в tools/ffmpeg/.\n"
     "Он нужен для конвертации mp3 -> ogg/opus.\n"
-    "Установите его (например, `winget install Gyan.FFmpeg`) или распакуйте\n"
-    "сборку в tools/ffmpeg/ так, чтобы был tools/ffmpeg/bin/ffmpeg.exe."
+    "Установите его (например, `apt install ffmpeg`) или распакуйте\n"
+    "сборку в tools/ffmpeg/ так, чтобы был tools/ffmpeg/bin/ffmpeg."
 )
 
 
@@ -138,14 +138,11 @@ def main() -> None:
     except RuntimeError as exc:
         sys.exit(f"ОШИБКА: {exc}")
 
-    # НАСТРОЙКИ ПРОКСИ
-    PROXY_URL = "socks5://127.0.0.1:10808"
+    # ПРОКСИ УДАЛЕН (сервер в Нидерландах, Telegram доступен напрямую)
 
     application = (
         ApplicationBuilder()
         .token(token)
-        .proxy(PROXY_URL)
-        .get_updates_proxy(PROXY_URL)
         .post_init(post_init)
         .build()
     )
